@@ -18,6 +18,7 @@ def dispatch_scan(scan_id: uuid.UUID, scope: ScanScope) -> None:
     Tasks are imported inline to avoid circular imports at module load time.
     """
     from backend.workers.recon_worker import run_recon
+    from backend.workers.network_worker import run_network_scan
 
     sid = str(scan_id)
     logger.info("Dispatching scan %s (scope=%s)", sid[:8], scope.value)
@@ -25,5 +26,7 @@ def dispatch_scan(scan_id: uuid.UUID, scope: ScanScope) -> None:
     if scope in (ScanScope.recon, ScanScope.full):
         run_recon.delay(sid)
 
-    # Sprint 4: network_worker dispatched here
+    if scope in (ScanScope.network, ScanScope.full):
+        run_network_scan.delay(sid)
+
     # Sprint 5: web_worker dispatched here
