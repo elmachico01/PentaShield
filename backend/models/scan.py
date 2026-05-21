@@ -33,6 +33,9 @@ class Scan(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    target_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("targets.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
     target: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[ScanStatus] = mapped_column(
         Enum(ScanStatus), nullable=False, default=ScanStatus.pending
@@ -49,3 +52,4 @@ class Scan(Base):
     )
 
     user: Mapped["User"] = relationship("User", back_populates="scans")  # noqa: F821
+    target_obj: Mapped["Target"] = relationship("Target")  # noqa: F821

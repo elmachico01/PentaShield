@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import get_settings
-from backend.api import auth, scans
+from backend.api import auth, scans, targets
 from backend.schemas.pydantic_schemas import HealthResponse
 
 settings = get_settings()
@@ -35,6 +35,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(targets.router)
 app.include_router(scans.router)
 
 

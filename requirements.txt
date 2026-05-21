@@ -23,3 +23,6 @@ redis==5.2.1
 
 # HTTP client (for AI engine, Shodan, NVD)
 httpx==0.28.1
+
+# DNS resolution (ownership verification)
+dnspython==2.7.0

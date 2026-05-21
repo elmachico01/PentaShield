@@ -13,6 +13,7 @@ if config.config_file_name is not None:
 # Import all models so Alembic can detect schema changes
 from backend.db.database import Base  # noqa: E402
 from backend.models.user import User  # noqa: E402, F401
+from backend.models.target import Target  # noqa: E402, F401
 from backend.models.scan import Scan  # noqa: E402, F401
 
 target_metadata = Base.metadata

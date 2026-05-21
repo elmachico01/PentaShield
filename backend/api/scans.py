@@ -6,6 +6,7 @@ from sqlalchemy import select, func
 
 from backend.db.database import get_db
 from backend.models.scan import Scan, ScanStatus
+from backend.models.target import Target
 from backend.models.user import User
 from backend.schemas.pydantic_schemas import ScanCreate, ScanOut
 from backend.core.deps import get_current_user
@@ -21,15 +22,30 @@ async def create_scan(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Scan:
-    # Enforce max concurrent scans
-    running_count_result = await db.execute(
+    # Resolve target — must belong to the user and be verified
+    target_result = await db.execute(
+        select(Target).where(
+            Target.id == payload.target_id,
+            Target.user_id == current_user.id,
+        )
+    )
+    target = target_result.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="Target non trovato")
+    if not target.verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Il dominio non è stato verificato. Completa la verifica prima di avviare uno scan.",
+        )
+
+    # Enforce max concurrent scans per user
+    running_result = await db.execute(
         select(func.count()).where(
             Scan.user_id == current_user.id,
             Scan.status.in_([ScanStatus.pending, ScanStatus.running]),
         )
     )
-    running_count = running_count_result.scalar_one()
-    if running_count >= settings.max_concurrent_scans_per_user:
+    if running_result.scalar_one() >= settings.max_concurrent_scans_per_user:
         raise HTTPException(
             status_code=429,
             detail=f"Massimo {settings.max_concurrent_scans_per_user} scan contemporanei per utente",
@@ -37,7 +53,8 @@ async def create_scan(
 
     scan = Scan(
         user_id=current_user.id,
-        target=payload.target,
+        target_id=target.id,
+        target=target.domain,
         scope=payload.scope,
         scan_options=payload.scan_options,
     )

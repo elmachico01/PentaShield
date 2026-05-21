@@ -6,6 +6,7 @@ import re
 
 from backend.models.user import Plan
 from backend.models.scan import ScanStatus, ScanScope
+from backend.models.target import VerificationMethod
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
@@ -49,18 +50,45 @@ DOMAIN_RE = re.compile(
 )
 
 
-class ScanCreate(BaseModel):
-    target: str
-    scope: ScanScope = ScanScope.full
-    scan_options: dict | None = None
+# ── Targets ──────────────────────────────────────────────────────────────────
 
-    @field_validator("target")
+class TargetCreate(BaseModel):
+    domain: str
+    verification_method: VerificationMethod = VerificationMethod.dns_txt
+
+    @field_validator("domain")
     @classmethod
-    def validate_domain(cls, v: str) -> str:
+    def validate_domain_field(cls, v: str) -> str:
         v = v.strip().lower().removeprefix("http://").removeprefix("https://").split("/")[0]
         if not DOMAIN_RE.match(v):
-            raise ValueError("Il target deve essere un dominio valido (es. example.com)")
+            raise ValueError("Il dominio non è valido (es. example.com)")
         return v
+
+
+class TargetOut(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    domain: str
+    verification_method: VerificationMethod
+    verification_token: str
+    verified: bool
+    verified_at: datetime | None
+    created_at: datetime
+
+
+class TargetVerifyResponse(BaseModel):
+    verified: bool
+    detail: str
+
+
+# ── Scans ────────────────────────────────────────────────────────────────────
+
+class ScanCreate(BaseModel):
+    target_id: uuid.UUID
+    scope: ScanScope = ScanScope.full
+    scan_options: dict | None = None
 
 
 class ScanOut(BaseModel):
@@ -68,6 +96,7 @@ class ScanOut(BaseModel):
 
     id: uuid.UUID
     user_id: uuid.UUID
+    target_id: uuid.UUID
     target: str
     status: ScanStatus
     scope: ScanScope
