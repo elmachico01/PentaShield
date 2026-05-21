@@ -5,11 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from backend.db.database import get_db
+from backend.models.finding import Finding
 from backend.models.scan import Scan, ScanStatus
 from backend.models.target import Target
 from backend.models.user import User
-from backend.schemas.pydantic_schemas import ScanCreate, ScanOut
+from backend.schemas.pydantic_schemas import ScanCreate, ScanOut, FindingOut
 from backend.core.deps import get_current_user
+from backend.core.orchestrator import dispatch_scan
 from backend.config import get_settings
 
 router = APIRouter(prefix="/scans", tags=["scans"])
@@ -61,6 +63,10 @@ async def create_scan(
     db.add(scan)
     await db.commit()
     await db.refresh(scan)
+
+    # Dispatch async workers — fire and forget
+    dispatch_scan(scan.id, scan.scope)
+
     return scan
 
 
@@ -88,3 +94,26 @@ async def get_scan(
     if not scan:
         raise HTTPException(status_code=404, detail="Scan non trovato")
     return scan
+
+
+@router.get("/{scan_id}/findings", response_model=list[FindingOut])
+async def get_scan_findings(
+    scan_id: uuid.UUID,
+    severity: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[Finding]:
+    # Verify scan ownership
+    scan_result = await db.execute(
+        select(Scan).where(Scan.id == scan_id, Scan.user_id == current_user.id)
+    )
+    if not scan_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Scan non trovato")
+
+    query = select(Finding).where(Finding.scan_id == scan_id)
+    if severity:
+        query = query.where(Finding.severity == severity.upper())
+    query = query.order_by(Finding.severity, Finding.created_at)
+
+    result = await db.execute(query)
+    return list(result.scalars().all())

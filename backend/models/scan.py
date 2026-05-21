@@ -53,3 +53,4 @@ class Scan(Base):
 
     user: Mapped["User"] = relationship("User", back_populates="scans")  # noqa: F821
     target_obj: Mapped["Target"] = relationship("Target")  # noqa: F821
+    findings: Mapped[list["Finding"]] = relationship("Finding", back_populates="scan")  # noqa: F821

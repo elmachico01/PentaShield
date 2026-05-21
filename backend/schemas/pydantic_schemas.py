@@ -7,6 +7,7 @@ import re
 from backend.models.user import Plan
 from backend.models.scan import ScanStatus, ScanScope
 from backend.models.target import VerificationMethod
+from backend.models.finding import Severity
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
@@ -103,6 +104,25 @@ class ScanOut(BaseModel):
     scan_options: dict | None
     started_at: datetime | None
     finished_at: datetime | None
+    created_at: datetime
+
+
+# ── Findings ─────────────────────────────────────────────────────────────────
+
+class FindingOut(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: uuid.UUID
+    scan_id: uuid.UUID
+    title: str
+    description: str
+    severity: Severity
+    cvss_score: float | None
+    affected_component: str
+    proof: str | None
+    fix_suggestion: str | None
+    nis2_control: str | None
+    source: str
     created_at: datetime
 
 

@@ -26,3 +26,8 @@ httpx==0.28.1
 
 # DNS resolution (ownership verification)
 dnspython==2.7.0
+
+# Sync DB driver for Celery workers
+psycopg2-binary==2.9.10
+
+# Shodan API via httpx (no SDK needed — uses REST API directly)

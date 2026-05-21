@@ -8,7 +8,7 @@ celery_app = Celery(
     "pentashield",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["backend.workers.test_worker"],
+    include=["backend.workers.test_worker", "backend.workers.recon_worker"],
 )
 
 celery_app.conf.update(
