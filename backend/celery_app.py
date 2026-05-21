@@ -12,6 +12,7 @@ celery_app = Celery(
         "backend.workers.test_worker",
         "backend.workers.recon_worker",
         "backend.workers.network_worker",
+        "backend.workers.web_worker",
     ],
 )
 

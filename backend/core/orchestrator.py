@@ -19,6 +19,7 @@ def dispatch_scan(scan_id: uuid.UUID, scope: ScanScope) -> None:
     """
     from backend.workers.recon_worker import run_recon
     from backend.workers.network_worker import run_network_scan
+    from backend.workers.web_worker import run_web_scan
 
     sid = str(scan_id)
     logger.info("Dispatching scan %s (scope=%s)", sid[:8], scope.value)
@@ -29,4 +30,5 @@ def dispatch_scan(scan_id: uuid.UUID, scope: ScanScope) -> None:
     if scope in (ScanScope.network, ScanScope.full):
         run_network_scan.delay(sid)
 
-    # Sprint 5: web_worker dispatched here
+    if scope in (ScanScope.web, ScanScope.full):
+        run_web_scan.delay(sid)

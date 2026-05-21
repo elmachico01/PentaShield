@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     nvd_api_key: str = ""
 
+    # OWASP ZAP
+    zap_api_url: str = "http://zap:8090"
+    zap_api_key: str = ""  # empty = API key disabled (api.disablekey=true)
+
     # App
     environment: str = "development"
     app_name: str = "PentaShield"

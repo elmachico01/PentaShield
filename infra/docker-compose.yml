@@ -99,6 +99,30 @@ services:
       - redis
     restart: unless-stopped
 
+  # ── OWASP ZAP (web scanner daemon) ──────────────────────────────────────────
+  # Enabled via: docker compose --profile scanning up
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    profiles: ["scanning"]
+    command: >
+      zap.sh -daemon
+      -host 0.0.0.0
+      -port 8090
+      -config api.disablekey=true
+      -config api.addrs.addr.name=.*
+      -config api.addrs.addr.regex=true
+      -config scanner.threadPerHost=2
+      -config connection.timeoutInSecs=20
+    ports:
+      - "8090:8090"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8090/JSON/core/view/version/ || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
 volumes:
   postgres_data:
   redis_data:
