@@ -13,6 +13,7 @@ celery_app = Celery(
         "backend.workers.recon_worker",
         "backend.workers.network_worker",
         "backend.workers.web_worker",
+        "backend.workers.report_worker",
     ],
 )
 

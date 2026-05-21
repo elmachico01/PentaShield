@@ -1,5 +1,7 @@
+import json
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, EmailStr, field_validator
 import re
@@ -8,6 +10,7 @@ from backend.models.user import Plan
 from backend.models.scan import ScanStatus, ScanScope
 from backend.models.target import VerificationMethod
 from backend.models.finding import Severity
+from backend.models.report import ReportStatus
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
@@ -124,6 +127,32 @@ class FindingOut(BaseModel):
     nis2_control: str | None
     source: str
     created_at: datetime
+
+
+# ── Reports ──────────────────────────────────────────────────────────────────
+
+class ReportOut(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: uuid.UUID
+    scan_id: uuid.UUID
+    status: ReportStatus
+    ai_summary: Any | None = None
+    nis2_gap_analysis: str | None
+    pdf_path: str | None
+    error_message: str | None
+    created_at: datetime
+    completed_at: datetime | None
+
+    @field_validator("ai_summary", mode="before")
+    @classmethod
+    def parse_ai_summary(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (json.JSONDecodeError, TypeError):
+                return None
+        return v
 
 
 # ── Health ────────────────────────────────────────────────────────────────────

@@ -31,3 +31,6 @@ dnspython==2.7.0
 psycopg2-binary==2.9.10
 
 # Shodan API via httpx (no SDK needed — uses REST API directly)
+
+# AI report engine
+anthropic>=0.40.0
