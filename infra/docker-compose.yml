@@ -99,6 +99,18 @@ services:
       - redis
     restart: unless-stopped
 
+  # ── React frontend ──────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
   # ── OWASP ZAP (web scanner daemon) ──────────────────────────────────────────
   # Enabled via: docker compose --profile scanning up
   zap:

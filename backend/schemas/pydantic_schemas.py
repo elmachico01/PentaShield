@@ -129,6 +129,25 @@ class FindingOut(BaseModel):
     created_at: datetime
 
 
+# ── NIS2 ─────────────────────────────────────────────────────────────────────
+
+class NIS2ControlOut(BaseModel):
+    description: str
+    status: str
+    penalty: int
+    finding_count: int
+    critical_findings: list[str]
+
+
+class NIS2ComplianceOut(BaseModel):
+    score: int
+    controls: dict[str, NIS2ControlOut]
+    gaps: list[str]
+    partial_controls: list[str]
+    total_findings: int
+    uncovered_findings: int
+
+
 # ── Reports ──────────────────────────────────────────────────────────────────
 
 class ReportOut(BaseModel):

@@ -9,9 +9,10 @@ from backend.models.finding import Finding
 from backend.models.scan import Scan, ScanStatus
 from backend.models.target import Target
 from backend.models.user import User
-from backend.schemas.pydantic_schemas import ScanCreate, ScanOut, FindingOut
+from backend.schemas.pydantic_schemas import ScanCreate, ScanOut, FindingOut, NIS2ComplianceOut
 from backend.core.deps import get_current_user
 from backend.core.orchestrator import dispatch_scan
+from backend.core.nis2_mapper import compute_compliance
 from backend.config import get_settings
 
 router = APIRouter(prefix="/scans", tags=["scans"])
@@ -117,3 +118,30 @@ async def get_scan_findings(
 
     result = await db.execute(query)
     return list(result.scalars().all())
+
+
+@router.get("/{scan_id}/nis2", response_model=NIS2ComplianceOut)
+async def get_scan_nis2(
+    scan_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """Return NIS2 Article 21 compliance analysis for a completed scan."""
+    scan_result = await db.execute(
+        select(Scan).where(Scan.id == scan_id, Scan.user_id == current_user.id)
+    )
+    if not scan_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Scan non trovato")
+
+    findings_result = await db.execute(
+        select(Finding).where(Finding.scan_id == scan_id)
+    )
+    findings = [
+        {
+            "title": f.title,
+            "severity": f.severity.value if hasattr(f.severity, "value") else f.severity,
+            "nis2_control": f.nis2_control,
+        }
+        for f in findings_result.scalars().all()
+    ]
+    return compute_compliance(findings)
